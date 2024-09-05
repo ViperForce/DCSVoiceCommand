@@ -6,69 +6,52 @@ import vgamepad as vg
 import threading
 import time
 import numpy as np
+from pathlib import Path
 import sounddevice as sd
 import noisereduce as nr
 from faster_whisper import WhisperModel
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+from Variables import *
 
 # Initialize the Whisper model
 model = WhisperModel("base", device="cpu")
+
+def open_file_in_same_directory(file_name):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    cwd = os.getcwd()
+
+    if script_dir != cwd:
+        print("Warning: the script is not running from its own directory.")
+        print(f"Script Directory: {script_dir}")
+        print(f"Current Working Directory: {cwd}")
+
+    file_path = os.path.join(cwd, file_name)
+
+    return file_path
 
 root = tk.CTk()
 root.geometry('400x600')
 root.title('DCS Voice Command')
 root.resizable(False, False)
-icon = Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/voice-circle.png")
+icon = Image.open(open_file_in_same_directory('icon.png'))
 photo = ImageTk.PhotoImage(icon)
 root.iconphoto(False, photo)
 
-titleImage = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/TitleLogo.png"),
+titleImage = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("TitleLogo.png")),
                          size=(400, 34))
 titleLabel = tk.CTkLabel(root, image=titleImage, text="")
 titleLabel.pack(padx=(20, 5), pady=(20, 5))
 
 # Divider
-dividerImage = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/Divider.png"),
+dividerImage = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("Divider.png")),
                            size=(375, 8))
 dividerLabelOne = tk.CTkLabel(root, image=dividerImage, text='')
 dividerLabelOne.pack(pady=(0, 20))
 
-powerIndicator = tk.CTkImage(light_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/PowerOffIcon.png"))
+powerIndicator = tk.CTkImage(light_image=Image.open(open_file_in_same_directory("PowerOffIcon.png")))
 gamepad = vg.VX360Gamepad()
 
-# Global variables
-listening = threading.Event()
-testing = False
-
-# Binding Variables
-wheelChocksPlaceVar = tk.StringVar(value='A Button')
-wheelChocksRemoveVar = tk.StringVar(value='B Button')
-radioCheckVar = tk.StringVar(value='Guide')
-groundAirConnectVar = tk.StringVar(value='X Button')
-groundAirDisconnectVar = tk.StringVar(value='Y Button')
-valueList = ["D-Pad Up", "D-Pad Down", "D-Pad Left", "D-Pad Right", "Start", "Guide",
-             "Back", "Left Trigger", "Right Trigger", "Left Shoulder", "Right Shoulder",
-             "A Button", "B Button", "X Button", "Y Button"]
-
-# Store the VG values of the bindings
-VG_values = {
-    "D-Pad Up": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP,
-    "D-Pad Down": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN,
-    "D-Pad Left": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT,
-    "D-Pad Right": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT,
-    "Start": vg.XUSB_BUTTON.XUSB_GAMEPAD_START,
-    "Guide": vg.XUSB_BUTTON.XUSB_GAMEPAD_GUIDE,
-    "Back": vg.XUSB_BUTTON.XUSB_GAMEPAD_BACK,
-    "Left Trigger": vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_THUMB,
-    "Right Trigger": vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_THUMB,
-    "Left Shoulder": vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER,
-    "Right Shoulder": vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER,
-    "A Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
-    "B Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_B,
-    "X Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_X,
-    "Y Button":vg.XUSB_BUTTON.XUSB_GAMEPAD_Y
-}
 
 def process_audio(indata):
     audio_data = np.frombuffer(indata, dtype=np.float32)
@@ -166,7 +149,7 @@ def test_listen_thread():
     global testing
     testing = True
     stop_listening()
-    micIcon = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/microphoneOn.png"))
+    micIcon = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("microphoneOn.png")))
     micImage.configure(image=micIcon, text='')
     root.update()
     print('Testing Microphone: ' + str(datetime.datetime.now()))
@@ -186,7 +169,7 @@ def test_listen_thread():
         root.update()
         time.sleep(5)  # Wait for a few seconds to allow audio capture
 
-    micIcon = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/microphoneOff.png"))
+    micIcon = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("microphoneOff.png")))
     micImage.configure(image=micIcon, text='')
     root.update()
     testing = False
@@ -204,13 +187,13 @@ def power():
     if status == 'Enable':
         print('User Enabled Speech Recognition: ' + str(datetime.datetime.now()))
         powerBText.set(value='Disable')
-        powerIndicator = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/PowerOnIcon.png"))
+        powerIndicator = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("PowerOnIcon.png")))
         powerIndicatorLabel.configure(image=powerIndicator, text='')
         start_listening()
     else:
         print('User Disabled Speech Recognition: ' + str(datetime.datetime.now()))
         powerBText.set(value='Enable')
-        powerIndicator = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/PowerOffIcon.png"))
+        powerIndicator = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("PowerOffIcon.png")))
         powerIndicatorLabel.configure(image=powerIndicator, text='')
         stop_listening()
 
@@ -275,7 +258,7 @@ powerIndicatorLabel.pack(side=tk.LEFT, padx=(10, 0))
 testingFrame = (tk.CTkFrame(root))
 testingFrame.pack(pady=10)
 # Microphone Icon
-micIcon = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/microphoneOff.png"))
+micIcon = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("microphoneOff.png")))
 micImage = tk.CTkLabel(testingFrame, image=micIcon, text='')
 micImage.pack(side=tk.LEFT, padx=10)
 # Testing button
@@ -294,7 +277,7 @@ dividerLabelTwo.pack(pady=(10, 5))
 optionsFrame = (tk.CTkFrame(root))
 optionsFrame.pack(pady=10)
 # Options Header
-optionsImage = tk.CTkImage(dark_image=Image.open("C:/Users/chery/OneDrive/Documents/DCS Voice Command/OptionsHeader.png"),
+optionsImage = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("OptionsHeader.png")),
                          size=(100, 34))
 optionsHeader = tk.CTkLabel(optionsFrame, image=optionsImage, text="")
 optionsHeader.grid(row=0, column=0, columnspan=2, padx=10, pady=(5,5))
