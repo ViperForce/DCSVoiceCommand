@@ -1,4 +1,5 @@
-from Main import threading, tk, vg
+from Main import tk, threading, vg
+
 
 # Global variables
 listening = threading.Event()
@@ -30,5 +31,11 @@ VG_values = {
     "A Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
     "B Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_B,
     "X Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_X,
-    "Y Button":vg.XUSB_BUTTON.XUSB_GAMEPAD_Y
+    "Y Button": vg.XUSB_BUTTON.XUSB_GAMEPAD_Y
 }
+
+def buttonGet(button):
+     global VG_values, valueList
+     for buttonString in valueList:
+         if buttonString == button:
+             return valueList[valueList.index(buttonString)]

@@ -1,18 +1,17 @@
-import customtkinter as tk
-from PIL import Image, ImageTk
-from tkinter import messagebox
 import datetime
-import vgamepad as vg
+import os
 import threading
 import time
-import numpy as np
-from pathlib import Path
-import sounddevice as sd
+from tkinter import messagebox
+import vgamepad as vg
+import customtkinter as tk
 import noisereduce as nr
+import numpy as np
+import sounddevice as sd
+from PIL import Image, ImageTk
 from faster_whisper import WhisperModel
-import os
+
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-from Variables import *
 
 # Initialize the Whisper model
 model = WhisperModel("base", device="cpu")
@@ -30,18 +29,20 @@ def open_file_in_same_directory(file_name):
 
     return file_path
 
-root = tk.CTk()
-root.geometry('400x600')
-root.title('DCS Voice Command')
-root.resizable(False, False)
-icon = Image.open(open_file_in_same_directory('icon.png'))
-photo = ImageTk.PhotoImage(icon)
-root.iconphoto(False, photo)
 
-titleImage = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("TitleLogo.png")),
-                         size=(400, 34))
-titleLabel = tk.CTkLabel(root, image=titleImage, text="")
-titleLabel.pack(padx=(20, 5), pady=(20, 5))
+class App:
+    def __init__(self, root):
+        root = root
+        self.root.title("DCS Voice Command")
+        self.root.geometry("400x600")
+        root.resizable(False, False)
+        self.image_label = tk.CTkImage(root, dark_image=self.Image.open(open_file_in_same_directory("TitleLogo.png")))
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
+from Variables import *
 
 # Divider
 dividerImage = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("Divider.png")),
@@ -54,6 +55,7 @@ gamepad = vg.VX360Gamepad()
 
 
 def process_audio(indata):
+    global recognized_text
     audio_data = np.frombuffer(indata, dtype=np.float32)
     reduced_noise = nr.reduce_noise(y=audio_data, sr=16000)
 
@@ -65,7 +67,7 @@ def process_audio(indata):
             return recognized_text
     return ""
 
-def audio_callback(indata, frames, time, status):
+def audio_callback(indata, status):
     if status:
         print(status)
     global recognized_text
@@ -85,47 +87,56 @@ def start_audio_stream():
     audio_stream.stop()
     audio_stream.close()
 
-def handle_recognition(recognized_text):
-    if ("chief place" in recognized_text.lower() or
-        "chief, place" in recognized_text.lower() or
-        "kerchief place" in recognized_text.lower() or
-        "Crouchy place" in recognized_text.lower()):
+def handle_recognition(recognized_text_local):
+    if ("chief place" in recognized_text_local.lower() or
+        "chief, place" in recognized_text_local.lower() or
+        "kerchief place" in recognized_text_local.lower() or
+        "Crouch place" in recognized_text_local.lower()):
         print("Phrase detected: Crew Chief place the wheel chocks")
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
+        gamepad.press_button(button=buttonGet(wheelChocksPlaceVar))
         gamepad.update()
-    elif ("chief remove" in recognized_text.lower() or
-        "chief, remove" in recognized_text.lower() or
-        "kerchief remove" in recognized_text.lower() or
-        "Crouchy remove" in recognized_text.lower()):
+        gamepad.release_button(button=buttonGet(wheelChocksPlaceVar))
+        gamepad.update()
+    elif ("chief remove" in recognized_text_local.lower() or
+        "chief, remove" in recognized_text_local.lower() or
+        "kerchief remove" in recognized_text_local.lower() or
+        "Crouchy remove" in recognized_text_local.lower()):
         print("Phrase detected: Crew Chief remove the wheel chocks")
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_B)
+        gamepad.press_button(button=buttonGet(wheelChocksRemoveVar))
         gamepad.update()
-    elif ("chief radio" in recognized_text.lower() or
-          "chief, radio" in recognized_text.lower() or
-          "chief check" in recognized_text.lower() or
-          "radio check" in recognized_text.lower() or
-          "chief i'll check" in recognized_text.lower()):
+        gamepad.release_button(button=buttonGet(wheelChocksRemoveVar))
+        gamepad.update()
+    elif ("chief radio" in recognized_text_local.lower() or
+          "chief, radio" in recognized_text_local.lower() or
+          "chief check" in recognized_text_local.lower() or
+          "radio check" in recognized_text_local.lower() or
+          "chief i'll check" in recognized_text_local.lower()):
         print("Phrase detected: Crew Chief radio check")
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_GUIDE)
+        gamepad.press_button(button=buttonGet(radioCheckVar))
         gamepad.update()
-    elif ("chief connect ground air" in recognized_text.lower() or
-        "chief, connect ground air" in recognized_text.lower() or
-        "chief connect air" in recognized_text.lower() or
-        "connect air" in recognized_text.lower() or
-        "connect ground air" in recognized_text.lower()):
+        gamepad.release_button(button=buttonGet(radioCheckVar))
+        gamepad.update()
+    elif ("chief connect ground air" in recognized_text_local.lower() or
+        "chief, connect ground air" in recognized_text_local.lower() or
+        "chief connect air" in recognized_text_local.lower() or
+        "connect air" in recognized_text_local.lower() or
+        "connect ground air" in recognized_text_local.lower()):
         print("Phrase detected: Crew Chief connect ground air supply.")
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
+        gamepad.press_button(button=buttonGet(groundAirConnectVar))
         gamepad.update()
-        gamepad.release_button()
-    elif ("chief disconnect ground air" in recognized_text.lower() or
-        "chief disconnect air" in recognized_text.lower() or
-        "disconnect air" in recognized_text.lower() or
-        "remove air" in recognized_text.lower() or
-        "chief remove air" in recognized_text.lower() or
-        "chief remove ground air" in recognized_text.lower() or
-        "disconnect ground air" in recognized_text.lower()):
+        gamepad.release_button(button=buttonGet(groundAirConnectVar))
+        gamepad.update()
+    elif ("chief disconnect ground air" in recognized_text_local.lower() or
+        "chief disconnect air" in recognized_text_local.lower() or
+        "disconnect air" in recognized_text_local.lower() or
+        "remove air" in recognized_text_local.lower() or
+        "chief remove air" in recognized_text_local.lower() or
+        "chief remove ground air" in recognized_text_local.lower() or
+        "disconnect ground air" in recognized_text_local.lower()):
         print("Phrase detected: Crew Chief disconnect ground air supply.")
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_Y)
+        gamepad.press_button(button=buttonGet(groundAirDisconnectVar))
+        gamepad.update()
+        gamepad.release_button(button=groundAirDisconnectVar)
         gamepad.update()
 
 def listen_in_background():
@@ -147,6 +158,8 @@ def stop_listening():
 
 def test_listen_thread():
     global testing
+    global micIcon
+    global recognized_text
     testing = True
     stop_listening()
     micIcon = tk.CTkImage(dark_image=Image.open(open_file_in_same_directory("microphoneOn.png")))
@@ -156,7 +169,7 @@ def test_listen_thread():
     testingText.set("Say something!")
     root.update()
 
-    def test_audio_callback(indata, frames, time, status):
+    def test_audio_callback(indata, status):
         if status:
             print(status)
         recognized_text = process_audio(indata)
